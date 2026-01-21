@@ -10,6 +10,7 @@ import { z } from "zod";
 import { publicProcedure, router } from "../../..";
 import {
 	activateProject,
+	allocatePortBase,
 	getBranchWorkspace,
 	getMaxWorkspaceTabOrder,
 	getProject,
@@ -82,6 +83,7 @@ export const createCreateProcedures = () => {
 					.get();
 
 				const maxTabOrder = getMaxWorkspaceTabOrder(input.projectId);
+				const portBase = allocatePortBase();
 
 				const workspace = localDb
 					.insert(workspaces)
@@ -92,6 +94,7 @@ export const createCreateProcedures = () => {
 						branch,
 						name: input.name ?? branch,
 						tabOrder: maxTabOrder + 1,
+						portBase,
 					})
 					.returning()
 					.get();
@@ -189,6 +192,7 @@ export const createCreateProcedures = () => {
 				// The unique partial index (projectId WHERE type='branch') prevents duplicates
 				// We insert first, then shift - this prevents race conditions where
 				// concurrent calls both shift before either inserts (causing double shifts)
+				const portBase = allocatePortBase();
 				const insertResult = localDb
 					.insert(workspaces)
 					.values({
@@ -197,6 +201,7 @@ export const createCreateProcedures = () => {
 						branch,
 						name: branch,
 						tabOrder: 0,
+						portBase,
 					})
 					.onConflictDoNothing()
 					.returning()
@@ -301,6 +306,7 @@ export const createCreateProcedures = () => {
 				}
 
 				const maxTabOrder = getMaxWorkspaceTabOrder(worktree.projectId);
+				const portBase = allocatePortBase();
 
 				const workspace = localDb
 					.insert(workspaces)
@@ -311,6 +317,7 @@ export const createCreateProcedures = () => {
 						branch: worktree.branch,
 						name: input.name ?? worktree.branch,
 						tabOrder: maxTabOrder + 1,
+						portBase,
 					})
 					.returning()
 					.get();
